@@ -133,9 +133,11 @@ class Trainer:
         for param_combo in new_params:
             # Train and evaluate model
             params_to_use = {param: value for param, value in zip(params_name, param_combo)}
-            output, computation_time = self._train_tm_model(params_to_use)
+            output, computation_time, perplexity = self._train_tm_model(params_to_use)
             print(f"Output for params {param_combo}: {output}")
             scores = self.evaluate(output)
+            scores["perplexity"] = perplexity
+            print(f"Perplexity {perplexity}")
 
             # Update results
             result = {
@@ -353,7 +355,7 @@ class Trainer:
         """Train BERTopic model"""
         data = self.data.get_corpus()
         data = [" ".join(words) for words in data]
-        params["calculate_probabilities"] = False
+        params["calculate_probabilities"] = True
 
         if self.custom_model is not None:
             model = self.custom_model(**params)
@@ -361,7 +363,10 @@ class Trainer:
             model = BERTopic(**params)
 
         start = time.time()
-        topics, _ = model.fit_transform(data, self.embeddings)
+        print(f"Number of embeddings {len(self.embeddings)}")
+        topics, probs = model.fit_transform(data, self.embeddings)
+        log_perplexity = -1 * np.mean(np.log(np.sum(probs, axis=1)))
+        perplexity = np.exp(log_perplexity)
 
         # Dynamic Topic Modeling
         if self.timestamps:
@@ -412,7 +417,7 @@ class Trainer:
 
             output_tm = {"topics": bertopic_topics}
 
-        return output_tm, computation_time
+        return output_tm, computation_time, perplexity
 
     def evaluate(self, output_tm):
         """Using metrics and output of the topic model, evaluate the topic model"""

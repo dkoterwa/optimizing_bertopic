@@ -1,13 +1,9 @@
 import re
-import nltk
 import string
 import pandas as pd
-
 from typing import List, Tuple, Union
 from octis.dataset.dataset import Dataset
 from octis.preprocessing.preprocessing import Preprocessing
-
-nltk.download("punkt")
 
 
 class DataLoader:
@@ -183,7 +179,6 @@ class DataLoader:
     def _trump(self) -> Tuple[List[str], List[str]]:
         """Prepare the trump dataset"""
         trump = pd.read_csv("./data/tweets.csv")
-        trump = trump.iloc[:3000]
         trump = trump.loc[(trump.isRetweet == "f") & (trump.text != ""), :]
         timestamps = trump.date.to_list()
         docs = trump.text.to_list()
