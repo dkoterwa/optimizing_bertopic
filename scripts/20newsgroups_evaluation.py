@@ -6,9 +6,9 @@ import os
 from utils.utils import DEFAULT_RANDOM_SEED, seedEverything
 
 
-def evaluate_trump_dataset(embeddings_path, save_path, number_of_runs):
+def evaluate_20ng_dataset(embeddings_path, save_path, number_of_runs):
     embeddings_data = np.load(embeddings_path, allow_pickle=True).item()
-    dataset, custom = "trump", True
+    dataset, custom = "./data/20newsgroups", True
     for key in tqdm(embeddings_data.keys()):
         embeddings = np.array(embeddings_data[key])
         for i in range(number_of_runs):
@@ -26,7 +26,7 @@ def evaluate_trump_dataset(embeddings_path, save_path, number_of_runs):
                 custom_dataset=custom,
                 verbose=True,
             )
-            results = trainer.train(save=f"{save_path}BERTopic_trump_{(key)}_{i+1}")
+            results = trainer.train(save=f"{save_path}BERTopic_20ng_{(key)}_{i+1}")
 
 
 if __name__ == "__main__":
@@ -36,17 +36,14 @@ if __name__ == "__main__":
         "--embeddings_path",
         type=str,
         help="Path to the .npy file with saved embeddings",
-        default="./embeddings_data/embeddings_trump_full.npy",
+        default="./embeddings_data/embeddings_20ng.npy",
     )
     parser.add_argument(
-        "--results_save_path",
-        type=str,
-        help="Path to save our results",
-        default="./results/results_with_perplexity/",
+        "--results_save_path", type=str, help="Path to save our results", default="./results/20newsgroups/"
     )
     parser.add_argument(
         "--n_of_runs", type=int, help="How many evaluations to run for single combination", default=3
     )
     args = parser.parse_args()
     os.makedirs(args.results_save_path, exist_ok=True)
-    evaluate_trump_dataset(args.embeddings_path, args.results_save_path, args.n_of_runs)
+    evaluate_20ng_dataset(args.embeddings_path, args.results_save_path, args.n_of_runs)
