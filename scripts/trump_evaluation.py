@@ -39,7 +39,7 @@ if __name__ == "__main__":
         default="./embeddings_data/embeddings_trump_full.npy",
     )
     parser.add_argument(
-        "--results_save_path", type=str, help="Path to save our results", default="./results_trump/"
+        "--results_save_path", type=str, help="Path to save our results", default="./results_with_perplexity/"
     )
     parser.add_argument(
         "--n_of_runs", type=int, help="How many evaluations to run for single combination", default=3
