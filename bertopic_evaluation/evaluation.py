@@ -6,7 +6,29 @@ import pandas as pd
 
 from sklearn.feature_extraction.text import CountVectorizer
 from typing import Mapping, Any, List, Tuple
-from bertopic import BERTopic
+
+try:
+    from bertopic import BERTopic
+except ImportError:
+    pass
+
+try:
+    from top2vec import Top2Vec
+except ImportError:
+    pass
+
+try:
+    from contextualized_topic_models.models.ctm import CombinedTM
+    from contextualized_topic_models.utils.data_preparation import (
+        TopicModelDataPreparation,
+    )
+    import nltk
+
+    nltk.download("stopwords")
+    from nltk.corpus import stopwords
+except ImportError:
+    pass
+
 from octis.models.ETM import ETM
 from octis.models.LDA import LDA
 from octis.models.NMF import NMF
@@ -133,11 +155,8 @@ class Trainer:
         for param_combo in new_params:
             # Train and evaluate model
             params_to_use = {param: value for param, value in zip(params_name, param_combo)}
-            output, computation_time, perplexity = self._train_tm_model(params_to_use)
-            print(f"Output for params {param_combo}: {output}")
+            output, computation_time = self._train_tm_model(params_to_use)
             scores = self.evaluate(output)
-            scores["perplexity"] = perplexity
-            print(f"Perplexity {perplexity}")
 
             # Update results
             result = {
@@ -154,12 +173,12 @@ class Trainer:
             with open(f"{save}.json", "w") as f:
                 json.dump(results, f)
 
-            # try:
-            #     from google.colab import files
+            try:
+                from google.colab import files
 
-            #     files.download(f"{save}.json")
-            # except ImportError:
-            #     pass
+                files.download(f"{save}.json")
+            except ImportError:
+                pass
 
         return results
 
@@ -355,7 +374,7 @@ class Trainer:
         """Train BERTopic model"""
         data = self.data.get_corpus()
         data = [" ".join(words) for words in data]
-        params["calculate_probabilities"] = True
+        params["calculate_probabilities"] = False
 
         if self.custom_model is not None:
             model = self.custom_model(**params)
@@ -364,9 +383,7 @@ class Trainer:
 
         start = time.time()
         print(f"Number of embeddings {len(self.embeddings)}")
-        topics, probs = model.fit_transform(data, self.embeddings)
-        log_perplexity = -1 * np.mean(np.log(np.sum(probs, axis=1)))
-        perplexity = np.exp(log_perplexity)
+        topics, _ = model.fit_transform(data, self.embeddings)
 
         # Dynamic Topic Modeling
         if self.timestamps:
@@ -417,7 +434,7 @@ class Trainer:
 
             output_tm = {"topics": bertopic_topics}
 
-        return output_tm, computation_time, perplexity
+        return output_tm, computation_time
 
     def evaluate(self, output_tm):
         """Using metrics and output of the topic model, evaluate the topic model"""
