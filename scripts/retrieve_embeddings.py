@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 import torch
 import numpy as np
 import pandas as pd
-import glob
+import os
 from tqdm import tqdm
 import gc
 from argparse import ArgumentParser
@@ -161,4 +161,5 @@ if __name__ == "__main__":
     embedder = EmbeddingsRetriever(model, tokenizer, dataloader)
     results = embedder.retrieve_embeddings()
     assert len(results) == len(texts), "Length of output is not equal to the length of input"
+    os.makedirs(f"../embeddings_data/", exist_ok=True)
     np.save(f"../embeddings_data/{args.dataset_name}.npy", results)
