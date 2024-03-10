@@ -2,8 +2,21 @@ import os
 import random
 import numpy as np
 import torch
+from torch.utils.data import Dataset
 
 DEFAULT_RANDOM_SEED = 42
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+class StringDataset(Dataset):
+    def __init__(self, strings):
+        self.strings = strings
+
+    def __len__(self):
+        return len(self.strings)
+
+    def __getitem__(self, idx):
+        return self.strings[idx]
 
 
 def seedBasic(seed=DEFAULT_RANDOM_SEED):
