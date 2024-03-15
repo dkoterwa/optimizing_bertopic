@@ -72,21 +72,21 @@ class EmbeddingsRetriever:
         # print(f"Hidden states shape {hidden_states[0].shape}")
         if pooling == "cls":
             pooler = Pooling("cls")
-            return pooler(hidden_states, layer_number)
+            return pooler(hidden_states, layer_number).cpu()
 
         elif pooling == "mean":
             assert (
                 self.attention_mask != None
             ), "Please provide attention mask if you are using mean pooling"
             pooler = Pooling("mean")
-            return pooler(hidden_states, layer_number, self.attention_mask)
+            return pooler(hidden_states, layer_number, self.attention_mask).cpu()
 
         elif pooling == "max":
             assert (
                 self.attention_mask != None
             ), "Please provide attention mask if you are using max pooling"
             pooler = Pooling("max")
-            return pooler(hidden_states, layer_number, self.attention_mask)
+            return pooler(hidden_states, layer_number, self.attention_mask).cpu()
         else:
             raise ValueError("Wrong pooling method provided in the function call")
 
@@ -147,19 +147,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--corpus_path", help="Path to the tsv file with corpus of texts", type=str, required=True
     )
-    parser.add_argument("--embedding_model_name", type=str, required=True)
+    parser.add_argument("--embedding_model_name", type=str,  default="sentence-transformers/all-mpnet-base-v2")
     parser.add_argument("--dataset_name", type=str, required=True)
     args = parser.parse_args()
 
     model = AutoModel.from_pretrained(args.embedding_model_name).to(DEVICE)
     tokenizer = AutoTokenizer.from_pretrained(args.embedding_model_name)
     data = pd.read_csv(args.corpus_path, sep="\t", header=None)
-    texts = data.iloc[:, 0].tolist()[:20]
+    texts = data.iloc[:, 0].tolist()
     dataset = StringDataset(texts)
-    dataloader = DataLoader(dataset, batch_size=64)
+    dataloader = DataLoader(dataset, batch_size=258, shuffle=False)
 
     embedder = EmbeddingsRetriever(model, tokenizer, dataloader)
     results = embedder.retrieve_embeddings()
-    assert len(results) == len(texts), "Length of output is not equal to the length of input"
+    assert len(results["get_embedding_layer_output_mean"]) == len(texts), "Length of output is not equal to the length of input"
     os.makedirs(f"../embeddings_data/", exist_ok=True)
     np.save(f"../embeddings_data/{args.dataset_name}.npy", results)
