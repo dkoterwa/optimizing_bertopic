@@ -8,7 +8,7 @@ from utils import DEFAULT_RANDOM_SEED, seedEverything
 
 def evaluate_dataset(embeddings_path, save_path, number_of_runs, dataset_name):
     embeddings_data = np.load(embeddings_path, allow_pickle=True).item()
-    dataset, custom = f"../data/{dataset_name}", True
+    dataset, custom = f"../data/without_stopwords/{dataset_name}", True
     for key in tqdm(embeddings_data.keys()):
         embeddings = np.array(embeddings_data[key])
         for i in range(number_of_runs):

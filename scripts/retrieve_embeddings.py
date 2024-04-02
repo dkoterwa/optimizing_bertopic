@@ -9,7 +9,8 @@ from tqdm import tqdm
 import gc
 from argparse import ArgumentParser
 from utils import StringDataset, DEVICE
-
+import nltk
+from nltk.corpus import stopwords
 
 class Pooling:
     def __init__(self, pooling_type):
@@ -154,12 +155,13 @@ if __name__ == "__main__":
     model = AutoModel.from_pretrained(args.embedding_model_name).to(DEVICE)
     tokenizer = AutoTokenizer.from_pretrained(args.embedding_model_name)
     data = pd.read_csv(args.corpus_path, sep="\t", header=None)
+    print(data.head())
     texts = data.iloc[:, 0].tolist()
-    dataset = StringDataset(texts)
+    dataset = StringDataset(texts_without_stopwords)
     dataloader = DataLoader(dataset, batch_size=258, shuffle=False)
 
     embedder = EmbeddingsRetriever(model, tokenizer, dataloader)
     results = embedder.retrieve_embeddings()
     assert len(results["get_embedding_layer_output_mean"]) == len(texts), "Length of output is not equal to the length of input"
-    os.makedirs(f"../embeddings_data/", exist_ok=True)
-    np.save(f"../embeddings_data/{args.dataset_name}.npy", results)
+    os.makedirs(f"../embeddings_data/without_stopwords/", exist_ok=True)
+    np.save(f"../embeddings_data/without_stopwords/{args.dataset_name}_nostopwords.npy", results)
