@@ -1,5 +1,6 @@
 numpy==1.23.0
 pandas==2.1.4
+gensim==4.2.0
 torch==2.2.0
 datasets==2.18.0
 transformers==4.39.3
@@ -8,8 +9,8 @@ tqdm==4.66.2
 bertopic==0.16.0
 umap-learn==0.5.5
 hdbscan==0.8.33
-scikit-learn==1.1.0
-scipy==1.11.4
 nltk==3.8.1
+scipy==1.11.4
+scikit-learn==1.1.0
 faiss-cpu==1.7.4
 octis==1.13.1
