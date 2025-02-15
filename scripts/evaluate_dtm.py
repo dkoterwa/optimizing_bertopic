@@ -1,34 +1,48 @@
 import numpy as np
-from BERTopic_evaluation.evaluation import Trainer
+import os
+from BERTopic_evaluation.evaluation import Trainer, DataLoader
 from tqdm import tqdm
 from argparse import ArgumentParser
 import os
 from utils import DEFAULT_RANDOM_SEED, seedEverything
 
 
-def evaluate_dataset(embeddings_path, save_path, number_of_runs, dataset_name, has_stopwords):
+def evaluate_dataset(embeddings_path, save_path, number_of_runs, dataset_name):
     embeddings_data = np.load(embeddings_path, allow_pickle=True).item()
-    dataset_path = f"../data/with_stopwords/{dataset_name}" if has_stopwords else f"../data/without_stopwords/{dataset_name}"
-    dataset, custom = dataset_path, True
+    dataset, custom = f"{dataset_name}_dtm", True
+
     for key in tqdm(embeddings_data.keys()):
         embeddings = np.array(embeddings_data[key])
         for i in range(number_of_runs):
             params = {
                 "embedding_model": "sentence-transformers/all-mpnet-base-v2",
-                "nr_topics": [(i+1) * 10 for i in range(5)],
+                "nr_topics": [50],
                 "min_topic_size": 15,
                 "verbose": True,
-            }
+                }
+
+            data_loader = DataLoader("trump_dtm")
+            _, timestamps = data_loader.load_docs()
+            
+            # Match indices
+            with open(f"{dataset}/indexes.txt") as f:
+                indices = f.readlines()
+
+            indices = [int(index.split("\n")[0]) for index in indices]
+            timestamps = [timestamp for index, timestamp in enumerate(timestamps) if index in indices]
+
             trainer = Trainer(
                 dataset=dataset,
                 model_name="BERTopic",
                 params=params,
                 bt_embeddings=embeddings,
+                bt_timestamps=timestamps,
+                topk=5,
+                bt_nr_bins=10,
                 custom_dataset=custom,
                 verbose=True,
             )
             results = trainer.train(save=f"{save_path}BERTopic_{dataset_name}_{(key)}_{i+1}")
-
 
 if __name__ == "__main__":
     seedEverything(DEFAULT_RANDOM_SEED)
@@ -47,8 +61,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset_name", type=str, help="Name of the directory where corpus of dataset is stored"
     )
-    parser.add_argument('--has_stopwords', action='store_true')
-
     args = parser.parse_args()
     os.makedirs(args.results_save_path, exist_ok=True)
-    evaluate_dataset(args.embeddings_path, args.results_save_path, args.n_of_runs, args.dataset_name, args.has_stopwords)
+    evaluate_dataset(args.embeddings_path, args.results_save_path, args.n_of_runs, args.dataset_name)

@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModel
 import pickle
 from torch.utils.data import DataLoader, Dataset
 import torch
+import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 import os
@@ -18,30 +19,20 @@ class Pooling:
 
     def __call__(self, hidden_states, layer_number, attention_mask=None):
         if self.pooling_type == "cls":
-            return hidden_states[layer_number][:, 0, :]
+            pooled = hidden_states[layer_number][:, 0, :]
         elif self.pooling_type == "mean":
-            token_embeddings = hidden_states[
-                layer_number
-            ]  # First element of model_output contains all token embeddings
-            input_mask_expanded = (
-                attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            )
-            return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
-                input_mask_expanded.sum(1), min=1e-9
-            )
+            token_embeddings = hidden_states[layer_number]
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+            pooled = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
         elif self.pooling_type == "max":
             token_embeddings = hidden_states[layer_number]
-            input_mask_expanded = (
-                attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            )
-            token_embeddings[input_mask_expanded == 0] = (
-                -1e9
-            )  # Set padding tokens to large negative value
-            max_embeddings = torch.max(token_embeddings, 1)[0]
-            return max_embeddings
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+            token_embeddings[input_mask_expanded == 0] = -1e9  # Set padding tokens to large negative value
+            pooled = torch.max(token_embeddings, 1)[0]
         else:
             raise ValueError("Wrong pooling method provided in the Pooler initialization")
 
+        return F.normalize(pooled, p=2, dim=1)
 
 class EmbeddingsRetriever:
     def __init__(self, embedding_model, tokenizer, dataloader):
@@ -157,11 +148,11 @@ if __name__ == "__main__":
     data = pd.read_csv(args.corpus_path, sep="\t", header=None)
     print(data.head())
     texts = data.iloc[:, 0].tolist()
-    dataset = StringDataset(texts_without_stopwords)
-    dataloader = DataLoader(dataset, batch_size=258, shuffle=False)
+    dataset = StringDataset(texts)
+    dataloader = DataLoader(dataset, batch_size=1024, shuffle=False)
 
     embedder = EmbeddingsRetriever(model, tokenizer, dataloader)
     results = embedder.retrieve_embeddings()
     assert len(results["get_embedding_layer_output_mean"]) == len(texts), "Length of output is not equal to the length of input"
-    os.makedirs(f"../embeddings_data/without_stopwords/", exist_ok=True)
-    np.save(f"../embeddings_data/without_stopwords/{args.dataset_name}_nostopwords.npy", results)
+    os.makedirs(f"./embeddings_data/dtm/with_stopwords/", exist_ok=True)
+    np.save(f"./embeddings_data/dtm/with_stopwords/{args.dataset_name}_stopwords.npy", results)
