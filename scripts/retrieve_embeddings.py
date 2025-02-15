@@ -156,4 +156,4 @@ if __name__ == "__main__":
     assert len(results["get_embedding_layer_output_mean"]) == len(texts), "Length of output is not equal to the length of input"
     stopwords_suffix = "with_stopwords" if args.has_stopwords else "without_stopwords"
     os.makedirs(f"../embeddings_data/{stopwords_suffix}/", exist_ok=True)
-    np.save(f"../embeddings_data/{stopwords_suffix}/{args.dataset_name}_stopwords.npy", results)
+    np.save(f"../embeddings_data/{stopwords_suffix}/{args.dataset_name}_{stopwords_suffix}.npy", results)
