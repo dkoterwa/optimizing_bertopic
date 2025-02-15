@@ -1,0 +1,3 @@
+[submodule "BERTopic_evaluation"]
+	path = BERTopic_evaluation
+	url = https://github.com/MaartenGr/BERTopic_evaluation.git
