@@ -154,5 +154,6 @@ if __name__ == "__main__":
     embedder = EmbeddingsRetriever(model, tokenizer, dataloader)
     results = embedder.retrieve_embeddings()
     assert len(results["get_embedding_layer_output_mean"]) == len(texts), "Length of output is not equal to the length of input"
-    os.makedirs(f"./embeddings_data/dtm/with_stopwords/", exist_ok=True)
-    np.save(f"./embeddings_data/dtm/with_stopwords/{args.dataset_name}_stopwords.npy", results)
+    stopwords_suffix = "with_stopwords" if args.has_stopwords else "without_stopwords"
+    os.makedirs(f"../embeddings_data/{stopwords_suffix}/", exist_ok=True)
+    np.save(f"../embeddings_data/{stopwords_suffix}/{args.dataset_name}_stopwords.npy", results)
