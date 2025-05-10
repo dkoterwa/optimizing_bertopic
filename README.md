@@ -23,4 +23,7 @@ python evaluate_bertopic.py \
     --has_stopwords
 ```
 
+### Disclaimer
+Before using the datasets on which our evaluation was conducted, we recommend reviewing their licenses. It is your responsibility to determine whether you have permission to use the dataset under the dataset's license and to cite the right owner of the dataset. 
+
 
